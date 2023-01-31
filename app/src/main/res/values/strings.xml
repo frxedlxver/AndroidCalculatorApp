@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">Calculator</string>
+    <string name="history">History</string>
+    <string name="result">Result</string>
+    <string name="txtNum1" translatable="false">1</string>
+    <string name="txtNum2" translatable="false">2</string>
+    <string name="txtNum3" translatable="false">3</string>
+    <string name="txtNum4" translatable="false">4</string>
+    <string name="txtNum5" translatable="false">5</string>
+    <string name="txtNum6" translatable="false">6</string>
+    <string name="txtNum7" translatable="false">7</string>
+    <string name="txtNum8" translatable="false">8</string>
+    <string name="txtNum9" translatable="false">9</string>
+    <string name="txtNum0" translatable="false">0</string>
+    <string name="txtOpAdd" translatable="false">+</string>
+    <string name="txtOpSub" translatable="false">-</string>
+    <string name="txtOpDiv" translatable="false">/</string>
+    <string name="txtOpMult" translatable="false">*</string>
+    <string name="txtOpSign" translatable="false">+-</string>
+    <string name="txtOpCalc" translatable="false">=</string>
+    <string name="txtOpDec" translatable="false">.</string>
+    <string name="txtOpUndo" translatable="false"></string>
+    <string name="txtOpClr" translatable="false">C</string>
+
 </resources>
