@@ -19,7 +19,7 @@
     <string name="txtOpSign" translatable="false">+-</string>
     <string name="txtOpCalc" translatable="false">=</string>
     <string name="txtOpDec" translatable="false">.</string>
-    <string name="txtOpUndo" translatable="false"></string>
+    <string name="txtOpDel" translatable="false">\u232b</string>
     <string name="txtOpClr" translatable="false">C</string>
 
 </resources>
