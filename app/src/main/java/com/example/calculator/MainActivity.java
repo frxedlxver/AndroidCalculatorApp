@@ -17,15 +17,18 @@ public class MainActivity extends AppCompatActivity {
         NUM, OP_BINARY, OP_UNARY, DEL, CLEAR, CALC;
     }
 
+    private double rightNum, leftNum, result;
+    private int curBinOpId;
+    private char curBinOpChar;
+    private String rightNumString, leftNumString, resultString, curExpressionString;
+    private ArrayList<Integer> btnHistory;
+
     private TextView displayExpression, displayResult;
     private Button btnNum1, btnNum2, btnNum3, btnNum4, btnNum5, btnNum6, btnNum7, btnNum8, btnNum9,
             btnNum0, btnOpAdd, btnOpSub, btnOpDiv, btnOpMult, btnOpSign, btnOpDec, btnOpCalc,
             btnOpClr, btnOpDel;
-    private double rightNum, leftNum, resultNum;
-    private int curBinOpId;
-    private ArrayList<Integer> btnHistory;
-    private String rightNumString, leftNumString, resultString, curExpressionString;
-    private char curBinOpChar;
+
+
 
     private final DecimalFormat displayDecimalFormat = new DecimalFormat("0.####");
 
@@ -83,40 +86,76 @@ public class MainActivity extends AppCompatActivity {
         btnOpDel.setOnClickListener(btnListener);
 
         // init values and displays
-        btnOpClr.performClick();
+        setDefaultAndInitUI();
 
     }
 
     /* ==================================== SPEC. METHODS ==================================== */
 
+    //
     private void setDefaultAndInitUI() {
         // set all values to default
         rightNum = 0;
         leftNum = 0;
-        resultNum = 0;
-        resultString = "0";
-        rightNumString = "0";
-        curExpressionString = "";
+        result = 0;
+        rightNumString = null;
+        leftNumString = null;
         curBinOpId = R.id.btnOpClr;
 
+        // clear press history to avoid leaks
+        btnHistory.clear();
+        // other functions will check to see if this was the last pressed, so add it in manually
+        btnHistory.add(R.id.btnOpClr);
+
         //initialize UI elements
+        updateExpressionString();
         updateExpressionDisplay();
+        updateResultNumString();
         updateResultDisplay();
     }
+    /* ==================================== GETTERS ==================================== */
 
-    /* ==================================== SETTERS ==================================== */
+    private int getLastButtonPressed() {
+        int btnHistoryLength = btnHistory.size();
+        if (btnHistoryLength > 1) {
+            return btnHistory.get(btnHistory.size() - 2);
+        } else {
+            return R.id.btnOpClr;
+        }
 
-    private void updateResultNumString() {
+    }
 
-        resultString = displayDecimalFormat.format(Double.valueOf(resultNum));
+    public ButtonTypes getButtonType(int id) {
+        if (id == R.id.btnNum1 || id == R.id.btnNum5 || id == R.id.btnNum2
+                || id == R.id.btnNum3 || id == R.id.btnNum4 || id == R.id.btnNum6
+                || id == R.id.btnNum7 || id == R.id.btnNum8 || id == R.id.btnNum9
+                || id == R.id.btnNum0) {
+            return ButtonTypes.NUM;
+        } else if (id == R.id.btnOpAdd || id == R.id.btnOpSub || id == R.id.btnOpMult || id == R.id.btnOpDiv) {
+            return ButtonTypes.OP_BINARY;
+        } else if (id == R.id.btnOpSign || id == R.id.btnOpDec) {
+            return ButtonTypes.OP_UNARY;
+        } else if (id == R.id.btnOpClr)  {
+            return ButtonTypes.CLEAR;
+        } else if (id == R.id.btnOpDel) {
+            return ButtonTypes.DEL;
+        } else /* if (id == R.id.btnOpCalc) */ {
+            return ButtonTypes.CALC;
+        }
+    }
+
+    /* ==================================== UPDATE STRINGS ==================================== */
+
+    private void updateResultNumString() { // tested
+        resultString = displayDecimalFormat.format(Double.valueOf(result));
     }
 
     private void updateLeftNumString() {
-        leftNumString = Double.toString(leftNum);
+        leftNumString = displayDecimalFormat.format(Double.valueOf(leftNum));
     }
 
     private void updateRightNumString() {
-        rightNumString = Double.toString(rightNum);
+        rightNumString = displayDecimalFormat.format(Double.valueOf(rightNum));
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -136,46 +175,40 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
-    @SuppressLint("NonConstantResourceId")
+
     private void updateExpressionString() {
-        if (curBinOpId == R.id.btnOpCalc) {
-            curExpressionString = leftNumString + " " + curBinOpChar + " " + rightNumString;
-        } else {
-            curExpressionString = leftNumString + " " + curBinOpChar;
+        String newExpressionString = "";
+
+        if (leftNumString != null) {
+            newExpressionString += leftNumString;
         }
+
+        if (curBinOpId != R.id.btnOpClr) {
+            newExpressionString += " " + curBinOpChar;
+            if (rightNumString != null) {
+                newExpressionString += " " + rightNumString;
+            }
+        }
+
+
+        curExpressionString = newExpressionString;
 
     }
 
     /* ==================================== DISPLAY CONTROL ==================================== */
 
     private void updateResultDisplay() {
-
-        // update result text
         displayResult.setText(resultString);
-
-        //update result text size, if necessary
-
-        if (resultString.length() >= 10) {
-            displayResult.setTextSize(60);
-        } else if (resultString.length() > 6) {
-            displayResult.setTextSize(displayResult.getTextSize() - 10);
-        }
     }
 
     private void updateExpressionDisplay() {
         displayExpression.setText(curExpressionString);
     }
 
-    private void updateDisplays() {
-        updateExpressionDisplay();
-        updateResultDisplay();
-    }
-
-
 
     /* ==================================== EVENT LISTENERS ==================================== */
 
-    public View.OnClickListener btnListener = new View.OnClickListener() {
+    public View.OnClickListener btnListener = new View.OnClickListener() { //todo:
         @Override
         public void onClick(View v) {
 
@@ -200,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case CLEAR:
                     setDefaultAndInitUI();
+                    setDefaultAndInitUI();
                     break;
                 case CALC:
                     calcBtnPressed();
@@ -207,21 +241,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
-
-        private int getLastButtonPressed() {
-            int btnHistoryLength = btnHistory.size();
-            if (btnHistoryLength > 0) {
-                return btnHistory.get(btnHistory.size() - 1);
-            } else {
-                return R.id.btnOpClr;
-            }
-
-        }
-
-
-
-
-
 
         private void numButtonPressed(int id) { // TESTED
 
@@ -248,14 +267,17 @@ public class MainActivity extends AppCompatActivity {
                 num = 0;
             }
 
-            int lastButtonPressed = getLastButtonPressed();
+            int lastPressed = getLastButtonPressed();
+            ButtonTypes lastPressedType = getButtonType(lastPressed);
 
-            if (resultNum == 0) {
-                resultNum = num;
+
+            if (result == 0 || lastPressedType == ButtonTypes.CALC
+                    || lastPressedType == ButtonTypes.OP_BINARY) {
+                result = num;
                 updateResultNumString();
             } else {
                 resultString += Integer.toString(num);
-                resultNum = Double.parseDouble(resultString);
+                result = Double.parseDouble(resultString);
             }
 
             updateResultDisplay();
@@ -268,11 +290,14 @@ public class MainActivity extends AppCompatActivity {
             int lastBtnPressed = getLastButtonPressed();
             ButtonTypes lastBtnPressedType = getButtonType(lastBtnPressed);
 
-            if (lastBtnPressedType == ButtonTypes.NUM || lastBtnPressedType == ButtonTypes.CALC
-                || lastBtnPressedType == ButtonTypes.OP_UNARY || lastBtnPressedType == ButtonTypes.DEL) {
-                leftNum = resultNum;
-                resultNum = 0;
+            if (lastBtnPressedType == ButtonTypes.CALC) {
                 rightNum = 0;
+                rightNumString = null;
+                leftNum = result;
+                updateLeftNumString();
+            } else if (leftNumString == null) {
+                leftNum = result;
+                updateLeftNumString();
             }
 
             updateExpressionString();
@@ -286,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
 
         private void unOpButtonPressed(int id) { // TESTED
             if (id == R.id.btnOpSign) {
-                resultNum = Calculator.sign(resultNum);
+                result = Calculator.sign(result);
                 updateResultNumString();
             } else /* if (id == R.id.btnOpDec) */ {
                 resultString += ".";
@@ -296,42 +321,59 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void delButtonPressed() { // TESTED
-            // remove last character
-            int resultLength = resultString.length();
-            
-            if (resultLength > 1) {
-                resultString = resultString.substring(0, (resultString.length() - 1));
-                resultNum = Double.parseDouble(resultString);
-            } else {
-                resultNum = 0;
-                updateResultNumString();
+
+            ButtonTypes lastPressedType = getButtonType( getLastButtonPressed() );
+            switch (lastPressedType) {
+                case NUM:
+                case OP_UNARY:
+                    // remove last character
+                    int resultLength = resultString.length();
+
+                    if (resultLength > 1) {
+                        resultString = resultString.substring(0, (resultString.length() - 1));
+                        result = Double.parseDouble(resultString);
+                    } else {
+                        result = 0;
+                        updateResultNumString();
+                    }
+                    break;
+                default:
+                    setDefaultAndInitUI();
             }
+
 
             updateResultDisplay();
             
         }
 
         private void calcBtnPressed() {
+            int lastPress = getLastButtonPressed();
+            ButtonTypes lastPressType = getButtonType(lastPress);
 
-        }
+            if (leftNumString == null) {
+                leftNum = result;
+                updateLeftNumString();
+            } else if (rightNumString == null) {
+                if (lastPressType != ButtonTypes.CALC) {
+                    rightNum = result;
+                    updateRightNumString();
+                    result = performCalculation();
+                }
+            } else if (lastPressType == ButtonTypes.CALC) {
+                leftNum = result;
+                updateLeftNumString();
+                result = performCalculation();
+            }// end if else
 
-        public ButtonTypes getButtonType(int id) {
-            if (id == R.id.btnNum1 || id == R.id.btnNum5 || id == R.id.btnNum2
-                || id == R.id.btnNum3 || id == R.id.btnNum4 || id == R.id.btnNum6
-                || id == R.id.btnNum7 || id == R.id.btnNum8 || id == R.id.btnNum9
-                || id == R.id.btnNum0) {
-                return ButtonTypes.NUM;
-            } else if (id == R.id.btnOpAdd || id == R.id.btnOpSub || id == R.id.btnOpMult || id == R.id.btnOpDiv || id == R.id.btnOpCalc) {
-                return ButtonTypes.OP_BINARY;
-            } else if (id == R.id.btnOpSign || id == R.id.btnOpDec) {
-                return ButtonTypes.OP_UNARY;
-            } else if (id == R.id.btnOpClr)  {
-                return ButtonTypes.CLEAR;
-            } else if (id == R.id.btnOpDel) {
-                return ButtonTypes.DEL;
-            } else /* if (id == R.id.btnOpCalc) */ {
-                return ButtonTypes.CALC;
-            }
+            updateResultNumString();
+            updateResultDisplay();
+            updateExpressionString();
+            updateExpressionDisplay();
+
+        } // end method
+
+        private double performCalculation() {
+            return Calculator.calculate(leftNum, rightNum, curBinOpChar);
         }
     };
 

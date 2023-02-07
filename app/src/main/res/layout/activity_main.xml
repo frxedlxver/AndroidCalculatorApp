@@ -18,37 +18,30 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintVertical_weight="0.4">
 
-        <TableRow
-            android:id="@+id/expression"
+
+        <TextView
+            android:id="@+id/displayExpression"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="0.4"
-            android:gravity="bottom|end">
+            android:text="@string/txtNum0"
+            android:gravity="bottom|end"
+            android:autoSizeMaxTextSize="70dp"
+            android:autoSizeMinTextSize="10dp"
+            android:autoSizeTextType="uniform"
+             />
 
-            <TextView
-                android:id="@+id/displayExpression"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="bottom|end"
-                android:text="@string/txtNum0"
-                android:textSize="50sp" />
-        </TableRow>
 
-        <TableRow
-            android:id="@+id/result"
+        <TextView
+            android:id="@+id/displayResult"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="0.6"
-            android:gravity="bottom|end">
-
-            <TextView
-                android:id="@+id/displayResult"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical|end"
-                android:text="@string/txtNum0"
-                android:textSize="100sp" />
-        </TableRow>
+            android:text="@string/txtNum0"
+            android:gravity="bottom|end"
+            android:autoSizeMaxTextSize="120dp"
+            android:autoSizeMinTextSize="30dp"
+            android:autoSizeTextType="uniform" />
 
     </TableLayout>
 
