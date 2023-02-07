@@ -7,25 +7,35 @@ import android.os.*;
 import android.view.View;
 import android.widget.*;
 
-import java.util.HashMap;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity {
+
+    private enum ButtonTypes {
+        NUM, OP_BINARY, OP_UNARY, DEL, CLEAR, CALC;
+    }
 
     private TextView displayExpression, displayResult;
     private Button btnNum1, btnNum2, btnNum3, btnNum4, btnNum5, btnNum6, btnNum7, btnNum8, btnNum9,
             btnNum0, btnOpAdd, btnOpSub, btnOpDiv, btnOpMult, btnOpSign, btnOpDec, btnOpCalc,
             btnOpClr, btnOpDel;
-    private final HashMap<Integer, Character> numBtnValMap = new HashMap<>();
-    private double curNum, lastNum;
-    private int curOpId;
-    private String curNumString, lastNumString, curExpressionString;
-    private char curOpChar;
+    private double rightNum, leftNum, resultNum;
+    private int curBinOpId;
+    private ArrayList<Integer> btnHistory;
+    private String rightNumString, leftNumString, resultString, curExpressionString;
+    private char curBinOpChar;
+
+    private final DecimalFormat displayDecimalFormat = new DecimalFormat("0.####");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // init history
+        btnHistory = new ArrayList<>();
 
         // init views
         displayExpression = findViewById(R.id.displayExpression);
@@ -51,94 +61,103 @@ public class MainActivity extends AppCompatActivity {
         btnOpDel = findViewById(R.id.btnOpDel);
 
 
-        numBtnValMap.put(R.id.btnNum1, '1');
-        numBtnValMap.put(R.id.btnNum2, '2');
-        numBtnValMap.put(R.id.btnNum3, '3');
-        numBtnValMap.put(R.id.btnNum4, '4');
-        numBtnValMap.put(R.id.btnNum5, '5');
-        numBtnValMap.put(R.id.btnNum6, '6');
-        numBtnValMap.put(R.id.btnNum7, '7');
-        numBtnValMap.put(R.id.btnNum8, '8');
-        numBtnValMap.put(R.id.btnNum9, '9');
-        numBtnValMap.put(R.id.btnNum0, '0');
-
-
         // set listeners
-        btnNum1.setOnClickListener(numBtnListener);
-        btnNum2.setOnClickListener(numBtnListener);
-        btnNum3.setOnClickListener(numBtnListener);
-        btnNum4.setOnClickListener(numBtnListener);
-        btnNum5.setOnClickListener(numBtnListener);
-        btnNum6.setOnClickListener(numBtnListener);
-        btnNum7.setOnClickListener(numBtnListener);
-        btnNum8.setOnClickListener(numBtnListener);
-        btnNum9.setOnClickListener(numBtnListener);
-        btnNum0.setOnClickListener(numBtnListener);
-
-        btnOpAdd.setOnClickListener(opBtnListener);
-        btnOpSub.setOnClickListener(opBtnListener);
-        btnOpDiv.setOnClickListener(opBtnListener);
-        btnOpMult.setOnClickListener(opBtnListener);
-        btnOpSign.setOnClickListener(signBtnListener);
-        btnOpDec.setOnClickListener(decBtnListener);
-        btnOpCalc.setOnClickListener(calculateBtnListener);
-        btnOpClr.setOnClickListener(clearBtnListener);
-        btnOpDel.setOnClickListener(deleteBtnListener);
+        btnNum1.setOnClickListener(btnListener);
+        btnNum2.setOnClickListener(btnListener);
+        btnNum3.setOnClickListener(btnListener);
+        btnNum4.setOnClickListener(btnListener);
+        btnNum5.setOnClickListener(btnListener);
+        btnNum6.setOnClickListener(btnListener);
+        btnNum7.setOnClickListener(btnListener);
+        btnNum8.setOnClickListener(btnListener);
+        btnNum9.setOnClickListener(btnListener);
+        btnNum0.setOnClickListener(btnListener);
+        btnOpAdd.setOnClickListener(btnListener);
+        btnOpSub.setOnClickListener(btnListener);
+        btnOpDiv.setOnClickListener(btnListener);
+        btnOpMult.setOnClickListener(btnListener);
+        btnOpSign.setOnClickListener(btnListener);
+        btnOpDec.setOnClickListener(btnListener);
+        btnOpCalc.setOnClickListener(btnListener);
+        btnOpClr.setOnClickListener(btnListener);
+        btnOpDel.setOnClickListener(btnListener);
 
         // init values and displays
-        curNum = 0;
-        lastNum = 0;
-        curOpId = R.id.btnOpClr;
-        updateExpressionString();
+        btnOpClr.performClick();
+
+    }
+
+    /* ==================================== SPEC. METHODS ==================================== */
+
+    private void setDefaultAndInitUI() {
+        // set all values to default
+        rightNum = 0;
+        leftNum = 0;
+        resultNum = 0;
+        resultString = "0";
+        rightNumString = "0";
+        curExpressionString = "";
+        curBinOpId = R.id.btnOpClr;
+
+        //initialize UI elements
         updateExpressionDisplay();
-        updateCurNumString();
         updateResultDisplay();
-
     }
 
-    private void updateCurNumString() {
-        if (curNum == 0) {
-            curNumString = "0";
-        }
-        curNumString = Double.toString(curNum);
+    /* ==================================== SETTERS ==================================== */
+
+    private void updateResultNumString() {
+
+        resultString = displayDecimalFormat.format(Double.valueOf(resultNum));
     }
 
-    private void updateLastNumString() {
-        lastNumString = Double.toString(lastNum);
+    private void updateLeftNumString() {
+        leftNumString = Double.toString(leftNum);
+    }
+
+    private void updateRightNumString() {
+        rightNumString = Double.toString(rightNum);
     }
 
     @SuppressLint("NonConstantResourceId")
-    private void updateCurOpChar() {
-        switch (curOpId) {
+    private void updateCurBinOpChar() {
+        switch (curBinOpId) {
             case R.id.btnOpAdd:
-                curOpChar = '+';
+                curBinOpChar = '+';
                 break;
             case R.id.btnOpSub:
-                curOpChar = '-';
+                curBinOpChar = '-';
                 break;
             case R.id.btnOpMult:
-                curOpChar = '*';
+                curBinOpChar = '*';
                 break;
             case R.id.btnOpDiv:
-                curOpChar = '/';
+                curBinOpChar = '/';
                 break;
         }
     }
+    @SuppressLint("NonConstantResourceId")
+    private void updateExpressionString() {
+        if (curBinOpId == R.id.btnOpCalc) {
+            curExpressionString = leftNumString + " " + curBinOpChar + " " + rightNumString;
+        } else {
+            curExpressionString = leftNumString + " " + curBinOpChar;
+        }
 
-    private void updateCurNum() {
-        curNum = Double.parseDouble(curNumString);
     }
+
+    /* ==================================== DISPLAY CONTROL ==================================== */
 
     private void updateResultDisplay() {
 
         // update result text
-        displayResult.setText(curNumString);
+        displayResult.setText(resultString);
 
         //update result text size, if necessary
 
-        if (curNumString.length() >= 10) {
+        if (resultString.length() >= 10) {
             displayResult.setTextSize(60);
-        } else if (curNumString.length() > 6) {
+        } else if (resultString.length() > 6) {
             displayResult.setTextSize(displayResult.getTextSize() - 10);
         }
     }
@@ -147,129 +166,174 @@ public class MainActivity extends AppCompatActivity {
         displayExpression.setText(curExpressionString);
     }
 
-    @SuppressLint("NonConstantResourceId")
-    private void updateExpressionString() {
-        switch(curOpId) {
-            case R.id.btnOpCalc:
-                curExpressionString = lastNumString + " " + curOpChar + " " + curNumString;
-                break;
-            case R.id.btnOpClr:
-                curExpressionString  = "";
-                break;
-            default:
-                curExpressionString = lastNumString + " " + curOpChar;
-                break;
-        }
-
+    private void updateDisplays() {
+        updateExpressionDisplay();
+        updateResultDisplay();
     }
+
+
 
     /* ==================================== EVENT LISTENERS ==================================== */
 
-    // event listener for numeric buttons
-    public View.OnClickListener numBtnListener = new View.OnClickListener() {
+    public View.OnClickListener btnListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
 
-            String temp = Character.toString(numBtnValMap.get(v.getId()));
+            int id = v.getId();
+            btnHistory.add(id);
 
-            if(curNum == 0 || curOpId == R.id.btnOpCalc) {
-                curNumString = temp;
+            ButtonTypes bType = getButtonType(id);
+
+            switch (bType) {
+
+                case NUM:
+                    numButtonPressed(id);
+                    break;
+                case OP_BINARY:
+                    binOpButtonPressed(id);
+                    break;
+                case OP_UNARY:
+                    unOpButtonPressed(id);
+                    break;
+                case DEL:
+                    delButtonPressed();
+                    break;
+                case CLEAR:
+                    setDefaultAndInitUI();
+                    break;
+                case CALC:
+                    calcBtnPressed();
+                    break;
+            }
+
+        }
+
+        private int getLastButtonPressed() {
+            int btnHistoryLength = btnHistory.size();
+            if (btnHistoryLength > 0) {
+                return btnHistory.get(btnHistory.size() - 1);
             } else {
-                curNumString += temp;
-            }
-            curNum = Double.parseDouble(curNumString);
-
-            System.out.println(curNumString);
-
-            updateResultDisplay();
-
-        }
-    };
-
-
-    // event listener for operator buttons
-    public View.OnClickListener opBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            curOpId = v.getId();
-            updateCurOpChar();
-
-            if (curNum != 0) {
-                lastNum = curNum;
-                curNum = 0;
-                updateLastNumString();
-                updateCurNumString();
+                return R.id.btnOpClr;
             }
 
-            updateExpressionString();
-            updateExpressionDisplay();
-            updateResultDisplay();
         }
-    };
 
-    public View.OnClickListener decBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            curNumString += ".";
-            updateResultDisplay();
-        }
-    };
 
-    // event listener for calculate button todo:
-    public View.OnClickListener calculateBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            curOpId = R.id.btnOpCalc;
-            updateExpressionString();
-            updateExpressionDisplay();
-            double result = Calculator.calculate(lastNum, curNum, curOpChar);
-            lastNum = curNum;
-            curNum = result;
-            updateCurNumString();
-            updateResultDisplay();
-        }
-    };
 
-    // event listener for operator buttons
-    public View.OnClickListener clearBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            curOpId = R.id.btnOpClr;
-            curNum = 0;
-            lastNum = 0;
 
-            updateCurNumString();
-            updateExpressionString();
-            updateLastNumString();
-            updateResultDisplay();
-            updateExpressionDisplay();
-        }
-    };
 
-    // event listener for delete button
-    public View.OnClickListener deleteBtnListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if(curNumString.length() > 1) {
-                curNumString = curNumString.substring(0, curNumString.length() - 1);
+
+        private void numButtonPressed(int id) { // TESTED
+
+            int num;
+            if (id == R.id.btnNum1) {
+                num = 1;
+            } else if (id == R.id.btnNum2) {
+                num = 2;
+            } else if (id == R.id.btnNum3) {
+                num = 3;
+            } else if (id == R.id.btnNum4) {
+                num = 4;
+            } else if (id == R.id.btnNum5) {
+                num = 5;
+            } else if (id == R.id.btnNum6) {
+                num = 6;
+            } else if (id == R.id.btnNum7) {
+                num = 7;
+            } else if (id == R.id.btnNum8) {
+                num = 8;
+            } else if (id == R.id.btnNum9) {
+                num = 9;
+            } else /* if (id == R.id.btnNum0) */ {
+                num = 0;
+            }
+
+            int lastButtonPressed = getLastButtonPressed();
+
+            if (resultNum == 0) {
+                resultNum = num;
+                updateResultNumString();
             } else {
-                curNumString = "0";
+                resultString += Integer.toString(num);
+                resultNum = Double.parseDouble(resultString);
+            }
+
+            updateResultDisplay();
+        }
+
+        private void binOpButtonPressed(int id) { //todo: test
+            curBinOpId = id;
+            updateCurBinOpChar();
+
+            int lastBtnPressed = getLastButtonPressed();
+            ButtonTypes lastBtnPressedType = getButtonType(lastBtnPressed);
+
+            if (lastBtnPressedType == ButtonTypes.NUM || lastBtnPressedType == ButtonTypes.CALC
+                || lastBtnPressedType == ButtonTypes.OP_UNARY || lastBtnPressedType == ButtonTypes.DEL) {
+                leftNum = resultNum;
+                resultNum = 0;
+                rightNum = 0;
+            }
+
+            updateExpressionString();
+            updateExpressionDisplay();
+            updateResultNumString();
+            updateResultDisplay();
+
+            
+        }
+
+
+        private void unOpButtonPressed(int id) { // TESTED
+            if (id == R.id.btnOpSign) {
+                resultNum = Calculator.sign(resultNum);
+                updateResultNumString();
+            } else /* if (id == R.id.btnOpDec) */ {
+                resultString += ".";
             }
             updateResultDisplay();
-            updateCurNum();
+            
         }
-    };
 
-    public View.OnClickListener signBtnListener = new View.OnClickListener() {
+        private void delButtonPressed() { // TESTED
+            // remove last character
+            int resultLength = resultString.length();
+            
+            if (resultLength > 1) {
+                resultString = resultString.substring(0, (resultString.length() - 1));
+                resultNum = Double.parseDouble(resultString);
+            } else {
+                resultNum = 0;
+                updateResultNumString();
+            }
 
-        @Override
-        public void onClick(View view) {
-            curNum = Calculator.sign(curNum);
-            updateCurNumString();
             updateResultDisplay();
+            
+        }
+
+        private void calcBtnPressed() {
+
+        }
+
+        public ButtonTypes getButtonType(int id) {
+            if (id == R.id.btnNum1 || id == R.id.btnNum5 || id == R.id.btnNum2
+                || id == R.id.btnNum3 || id == R.id.btnNum4 || id == R.id.btnNum6
+                || id == R.id.btnNum7 || id == R.id.btnNum8 || id == R.id.btnNum9
+                || id == R.id.btnNum0) {
+                return ButtonTypes.NUM;
+            } else if (id == R.id.btnOpAdd || id == R.id.btnOpSub || id == R.id.btnOpMult || id == R.id.btnOpDiv || id == R.id.btnOpCalc) {
+                return ButtonTypes.OP_BINARY;
+            } else if (id == R.id.btnOpSign || id == R.id.btnOpDec) {
+                return ButtonTypes.OP_UNARY;
+            } else if (id == R.id.btnOpClr)  {
+                return ButtonTypes.CLEAR;
+            } else if (id == R.id.btnOpDel) {
+                return ButtonTypes.DEL;
+            } else /* if (id == R.id.btnOpCalc) */ {
+                return ButtonTypes.CALC;
+            }
         }
     };
-
 
 
 }

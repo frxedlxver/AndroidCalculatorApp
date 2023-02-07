@@ -2,11 +2,14 @@ package com.example.calculator;
 
 public class Util {
 
-    public int getSigDig(double input) {
+    public static int getSigFig(double input) {
         String temp = Double.toString(input);
 
-        String left = temp.split("/.")[1];
-        
-        return left.length();
+        String[] split = temp.split("/.");
+
+        if (split.length > 1) {
+            return split[1].length();
+        } else return 0;
+
     }
 }
