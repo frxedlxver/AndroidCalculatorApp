@@ -1,0 +1,13 @@
+test cases
+
+sign button pressed before first num input
+	expect: next input is registered as negative
+	what happens: next input is registered as positive. initial sign input is ignored.
+
+press decimal button more than once for same number
+	expect: nothing happens
+	what happens: more decimals added
+
+press decimal button after pressing equals
+	expect: result displays "0."
+	what happens: nothing

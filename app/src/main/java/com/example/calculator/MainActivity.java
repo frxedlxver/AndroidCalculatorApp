@@ -2,7 +2,6 @@ package com.example.calculator;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.os.*;
 import android.view.View;
 import android.widget.*;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     private enum ButtonTypes {
-        NUM, OP_BINARY, OP_UNARY, DEL, CLEAR, CALC;
+        NUM, OP_BINARY, OP_UNARY, DEL, CLEAR, CALC
     }
 
     private double rightNum, leftNum, result;
@@ -158,21 +157,15 @@ public class MainActivity extends AppCompatActivity {
         rightNumString = displayDecimalFormat.format(Double.valueOf(rightNum));
     }
 
-    @SuppressLint("NonConstantResourceId")
     private void updateCurBinOpChar() {
-        switch (curBinOpId) {
-            case R.id.btnOpAdd:
-                curBinOpChar = '+';
-                break;
-            case R.id.btnOpSub:
-                curBinOpChar = '-';
-                break;
-            case R.id.btnOpMult:
-                curBinOpChar = '*';
-                break;
-            case R.id.btnOpDiv:
-                curBinOpChar = '/';
-                break;
+        if (curBinOpId == R.id.btnOpAdd) {
+            curBinOpChar = '+';
+        } else if (curBinOpId == R.id.btnOpSub) {
+            curBinOpChar = '-';
+        } else if (curBinOpId == R.id.btnOpMult) {
+            curBinOpChar = '*';
+        } else if (curBinOpId == R.id.btnOpDiv) {
+            curBinOpChar = '/';
         }
     }
 
@@ -209,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
     /* ==================================== EVENT LISTENERS ==================================== */
 
     public View.OnClickListener btnListener = new View.OnClickListener() { //todo:
+
         @Override
         public void onClick(View v) {
 
@@ -313,11 +307,18 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.btnOpSign) {
                 result = Calculator.sign(result);
                 updateResultNumString();
-            } else /* if (id == R.id.btnOpDec) */ {
-                resultString += ".";
+            } else if (id == R.id.btnOpDec) {
+                decButtonPressed();
             }
             updateResultDisplay();
             
+        }
+
+        private void decButtonPressed() { // test case: press decimal button more than once for same number
+            if(!resultString.matches("-?\\d*[.]\\d*")) {
+                resultString += ".";
+            }
+
         }
 
         private void delButtonPressed() { // TESTED
