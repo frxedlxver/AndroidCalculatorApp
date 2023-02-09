@@ -1,7 +1,5 @@
 package com.example.calculator;
 
-import android.view.View;
-
 public class Calculator {
 
 
