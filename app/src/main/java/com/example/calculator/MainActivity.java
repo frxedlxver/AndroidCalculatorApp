@@ -117,8 +117,10 @@ public class MainActivity extends AppCompatActivity {
     private int getLastButtonPressed() {
         int btnHistoryLength = btnHistory.size();
         if (btnHistoryLength > 1) {
+            // we want the button just before the most recent press
             return btnHistory.get(btnHistory.size() - 2);
         } else {
+            // if button history has been cleared, clear is the last button pressed
             return R.id.btnOpClr;
         }
 
@@ -172,10 +174,13 @@ public class MainActivity extends AppCompatActivity {
     private void updateExpressionString() {
         String newExpressionString = "";
 
+        // if no number registered as leftNum
         if (leftNumString != null) {
             newExpressionString += leftNumString;
         }
 
+        // curBinOp will only store ids of binary operators or special clear operator
+        // it cannot point to null, so use clear operator as equivalent
         if (curBinOpId != R.id.btnOpClr) {
             newExpressionString += " " + curBinOpChar;
             if (rightNumString != null) {
@@ -264,9 +269,22 @@ public class MainActivity extends AppCompatActivity {
             int lastPressed = getLastButtonPressed();
             ButtonTypes lastPressedType = getButtonType(lastPressed);
 
+            // guard clause
+            if (lastPressedType == ButtonTypes.CALC) {
+                setDefaultAndInitUI();
+            }
 
-            if (result == 0 || lastPressedType == ButtonTypes.CALC
-                    || lastPressedType == ButtonTypes.OP_BINARY) {
+            if (lastPressedType == ButtonTypes.OP_BINARY) {
+                result = 0;
+                updateResultNumString();
+            }
+
+            // if result is displaying "-0" because user pressed sign before num input
+            if (resultString.matches("-0")) {
+                result = -num;
+                updateResultNumString();
+            // if result is displaying "-0." or "0."
+            } else if (!resultString.matches("-*0.") && result == 0) {
                 result = num;
                 updateResultNumString();
             } else {
@@ -277,12 +295,12 @@ public class MainActivity extends AppCompatActivity {
             updateResultDisplay();
         }
 
+
         private void binOpButtonPressed(int id) { //todo: test
             curBinOpId = id;
             updateCurBinOpChar();
 
-            int lastBtnPressed = getLastButtonPressed();
-            ButtonTypes lastBtnPressedType = getButtonType(lastBtnPressed);
+            ButtonTypes lastBtnPressedType = getButtonType(getLastButtonPressed());
 
             if (lastBtnPressedType == ButtonTypes.CALC) {
                 rightNum = 0;
@@ -298,32 +316,40 @@ public class MainActivity extends AppCompatActivity {
             updateExpressionDisplay();
             updateResultNumString();
             updateResultDisplay();
-
-            
         }
 
 
-        private void unOpButtonPressed(int id) { // TESTED
+        private void unOpButtonPressed(int id) {
             if (id == R.id.btnOpSign) {
-                result = Calculator.sign(result);
-                updateResultNumString();
+                signButtonPressed();
             } else if (id == R.id.btnOpDec) {
                 decButtonPressed();
-            }
+            } // end if-else-if
             updateResultDisplay();
-            
         }
 
-        private void decButtonPressed() { // test case: press decimal button more than once for same number
-            if(!resultString.matches("-?\\d*[.]\\d*")) {
+
+        private void signButtonPressed() {
+            ButtonTypes lastPressType = getButtonType(getLastButtonPressed());
+            if (lastPressType == ButtonTypes.CALC) {
+                setDefaultAndInitUI();
+            }
+            result = Calculator.sign(result);
+            updateResultNumString();
+        }
+
+
+        private void decButtonPressed() {
+            // do not add more than one decimal point to a number
+            if(resultString.matches("-?\\d*")) {
                 resultString += ".";
             }
-
         }
 
-        private void delButtonPressed() { // TESTED
 
+        private void delButtonPressed() {
             ButtonTypes lastPressedType = getButtonType( getLastButtonPressed() );
+
             switch (lastPressedType) {
                 case NUM:
                 case OP_UNARY:
@@ -336,47 +362,49 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         result = 0;
                         updateResultNumString();
-                    }
+                    } // end if-else
                     break;
                 default:
                     setDefaultAndInitUI();
-            }
-
+            } // end switch
 
             updateResultDisplay();
-            
-        }
+        } // end method
 
         private void calcBtnPressed() {
-            int lastPress = getLastButtonPressed();
-            ButtonTypes lastPressType = getButtonType(lastPress);
+            ButtonTypes lastPressType = getButtonType(getLastButtonPressed());
 
-            if (leftNumString == null) {
+            // check for division by 0
+            if (result == 0 && curBinOpChar == '/') {
+                setDefaultAndInitUI();
+                resultString = "Nan";
+                updateResultDisplay();
+            // if only one number is entered
+            } else if (curExpressionString == null) {
                 leftNum = result;
                 updateLeftNumString();
-            } else if (rightNumString == null) {
-                if (lastPressType != ButtonTypes.CALC) {
-                    rightNum = result;
-                    updateRightNumString();
-                    result = performCalculation();
-                }
+            // if two numbers, any number of unary ops, and a binary op are entered
+            } else if (curExpressionString.matches("-*\\d.*\\d* [+\\-*/]")) {
+                rightNum = result;
+                updateRightNumString();
+                result = performCalculation();
+            // accumulative calculation
             } else if (lastPressType == ButtonTypes.CALC) {
                 leftNum = result;
                 updateLeftNumString();
                 result = performCalculation();
-            }// end if else
+            }// end if-else-if
 
-            updateResultNumString();
-            updateResultDisplay();
             updateExpressionString();
             updateExpressionDisplay();
+            updateResultNumString();
+            updateResultDisplay();
 
         } // end method
 
         private double performCalculation() {
             return Calculator.calculate(leftNum, rightNum, curBinOpChar);
-        }
-    };
+        } // end method
+    }; // end anonymous listener class
 
-
-}
+} // end MainActivity
